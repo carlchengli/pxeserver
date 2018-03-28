@@ -1,0 +1,50 @@
+---
+#- name: set up apt source
+#  template: src=etc/apt/sources.list.j2
+#            dest=/etc/apt/sources.list
+#
+- name: update apt cache
+  apt: update_cache=yes
+
+- name: disable ufw firewall
+  ufw: state=disabled
+
+- name: install pkgs
+  apt: name={{ item }}
+  with_items:
+    - dnsmasq
+    - apache2
+
+- name: ensure dirs
+  file: name={{ item }} state=directory
+  with_items:
+    - "/var/www/html/ubuntu"
+    - "/var/lib/tftpboot/ubuntu"
+    - "/var/lib/tftpboot/pxelinux.cfg"
+    - "/vagrant"
+
+- name: configure for pxe boot
+  template: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - {src: "var/www/html/ubuntu.ks.j2", dest: "/var/www/html/ubuntu.ks"}
+    - {src: "var/lib/tftpboot/pxelinux.cfg/default.j2", dest: "/var/lib/tftpboot/pxelinux.cfg/default"}
+    - {src: "etc/dnsmasq.conf.j2", dest: "/etc/dnsmasq.conf"}
+
+- name: download ubuntu iso
+  shell: curl http://mirrors.aliyun.com/ubuntu-releases/16.04/ubuntu-16.04.4-server-amd64.iso -o /vagrant/ubuntu-16.04.4-server-amd64.iso
+  args:
+    creates: /vagrant/ubuntu-16.04.4-server-amd64.iso
+
+- name: extract ubuntu iso
+  shell: mkdir /tmp/iso; mount /vagrant/ubuntu-16.04.4-server-amd64.iso /tmp/iso; cp -r /tmp/iso/* /var/www/html/ubuntu/
+  args:
+    creates: /var/www/html/ubuntu/install
+
+- name: create files in tftp dir
+  file: src={{ item.src }} dest={{ item.dest }} state=link
+  notify: restart dnsmasq
+  with_items:
+    - {dest: "/var/lib/tftpboot/ldlinux.c32", src: "/var/www/html/ubuntu/install/netboot/ubuntu-installer/amd64/boot-screens/ldlinux.c32"}
+    - {dest: "/var/lib/tftpboot/pxelinux.0", src: "/var/www/html/ubuntu/install/netboot/ubuntu-installer/amd64/pxelinux.0"}
+    - {dest: "/var/lib/tftpboot/ubuntu/initrd.gz", src: "/var/www/html/ubuntu/install/netboot/ubuntu-installer/amd64/initrd.gz"}
+    - {dest: "/var/lib/tftpboot/ubuntu/vmlinuz", src: "/var/www/html/ubuntu/install/vmlinuz"}

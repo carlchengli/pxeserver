@@ -1,0 +1,8 @@
+prompt 0
+default ubuntu
+timeoute 0
+
+label ubuntu
+kernel ubuntu/vmlinuz
+append initrd=ubuntu/initrd.gz ksdevice=bootif ks=http://{{ pxe_server_ip }}/ubuntu.ks
+ipappend 2

@@ -1,0 +1,5 @@
+---
+- name: gather facts on all hosts
+  hosts: localhost
+  roles:
+    - role: pxeserver

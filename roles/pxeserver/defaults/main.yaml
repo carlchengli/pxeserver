@@ -1,0 +1,4 @@
+---
+pxe_server_ip: 192.168.50.3
+dhcp_start_ip: 192.168.50.100
+dhcp_end_ip: 192.168.50.200
