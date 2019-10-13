@@ -1,5 +1,5 @@
 ---
-- name: gather facts on all hosts
+- name: deploy pxe server
   hosts: localhost
   roles:
     - role: pxeserver
